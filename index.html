@@ -1420,6 +1420,70 @@
           });
         }
 
+        function sendCheckoutLeadEmail() {
+          var data = normalizeCartData(getStoredCart());
+          var leadGuest = getLeadGuestContact(data.items);
+          var lineItems = data.items.map(function(item) {
+            return [
+              item.name || "Jopa Travel Reservation",
+              "Qty " + Number(item.quantity || 0),
+              "Unit " + formatUsd((item.unitAmount || 0) / 100),
+              "Total " + formatUsd((Number(item.quantity || 0) * Number(item.unitAmount || 0)) / 100)
+            ].join(" | ");
+          }).join("\n");
+
+          var payload = {
+            full_name: leadGuest && leadGuest.name || "",
+            email: leadGuest && leadGuest.email || "",
+            phone: leadGuest && leadGuest.phone || "",
+            passengers: data.passengers,
+            items_in_cart: data.items.length,
+            cart_total: formatUsd(data.total),
+            cart_page: CART_PAGE_URL,
+            source: "jopa-cart-checkout",
+            reservation_summary: lineItems,
+            _subject: "Jopa Cart Checkout Started",
+            _template: "table",
+            _captcha: "false"
+          };
+
+          if (navigator.sendBeacon) {
+            try {
+              var formData = new FormData();
+              Object.keys(payload).forEach(function(key) {
+                formData.append(key, payload[key]);
+              });
+
+              if (navigator.sendBeacon("https://formsubmit.co/pestevez@jopanauticos.com", formData)) {
+                pushDebug("lead email queued with sendBeacon");
+                return Promise.resolve({ queued: true, channel: "sendBeacon" });
+              }
+            } catch (error) {
+              pushDebug("lead email sendBeacon fallback -> " + (error && error.message ? error.message : "unknown"));
+            }
+          }
+
+          return fetch(RESERVATION_EMAIL_ENDPOINT, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            keepalive: true,
+            body: JSON.stringify(payload)
+          }).then(function(response) {
+            if (!response.ok) {
+              return response.text().then(function(text) {
+                throw new Error(text || "Lead email could not be sent.");
+              });
+            }
+
+            return response.json().catch(function() {
+              return {};
+            });
+          });
+        }
+
         if (checkoutButton) {
           checkoutButton.addEventListener("click", function () {
             var data = normalizeCartData(getStoredCart());
@@ -1458,6 +1522,11 @@
                 checkoutStatusEl.className = "status error";
                 return;
               }
+
+              sendCheckoutLeadEmail().catch(function(error) {
+                pushDebug("lead email warning -> " + (error && error.message ? error.message : "unknown"));
+                return null;
+              });
 
               checkoutStatusEl.textContent = "Stripe session created successfully. Redirecting to checkout...";
               checkoutStatusEl.className = "status success";
