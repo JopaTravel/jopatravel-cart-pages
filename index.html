@@ -695,12 +695,11 @@
         var CHILD_PRODUCT_ID = "831526377";
         var ADULT_PRICE = 84.5;
         var CHILD_PRICE = 74.5;
-        var BACKEND_BASE_URL = "https://giving-beauty-production-a669.up.railway.app";
+        var BACKEND_BASE_URL = "https://jopatravel-stripe-backend-production.up.railway.app";
         var STRIPE_PUBLISHABLE_KEY = "pk_live_51L4H7TEMYnSqfbSre0mpTkCihZz3UylGZBua4l56dPQltG0odzIUk5ghAB10sAA2kpkEIkI6qqpIvikr0B91iDQb00MbZTljvx";
         var STRIPE_CHECKOUT_ENDPOINT = BACKEND_BASE_URL + "/api/create-checkout-session";
         var SITE_URL = "https://www.jopatravel.com";
         var CART_PAGE_URL = "https://cart.jopatravel.com";
-        var RESERVATION_EMAIL_ENDPOINT = "https://formsubmit.co/ajax/reservas@jopanauticos.com";
         var CART_SYNC_EVENT = "jopa-cart-updated";
         var SHOPPING_CATEGORIES = [
           {
@@ -1420,88 +1419,6 @@
           });
         }
 
-        function sendCheckoutLeadEmail() {
-          var data = normalizeCartData(getStoredCart());
-          var leadGuest = getLeadGuestContact(data.items);
-          var lineItems = data.items.map(function(item) {
-            var metadata = item && item.metadata ? item.metadata : {};
-            return [
-              item.name || "Jopa Travel Reservation",
-              "Qty " + Number(item.quantity || 0),
-              "Unit " + formatUsd((item.unitAmount || 0) / 100),
-              "Total " + formatUsd((Number(item.quantity || 0) * Number(item.unitAmount || 0)) / 100),
-              metadata.reservation_date ? "Date " + metadata.reservation_date : "",
-              metadata.reservation_time ? "Time " + metadata.reservation_time : "",
-              metadata.reservation_hotel ? "Hotel " + metadata.reservation_hotel : "",
-              metadata.reservation_zone ? "Zone " + metadata.reservation_zone : "",
-              metadata.reservation_notes ? "Notes " + metadata.reservation_notes : ""
-            ].join(" | ");
-          }).join("\n");
-
-          var payload = {
-            full_name: leadGuest && leadGuest.name || "",
-            email: leadGuest && leadGuest.email || "",
-            phone: leadGuest && leadGuest.phone || "",
-            passengers: data.passengers,
-            items_in_cart: data.items.length,
-            cart_total: formatUsd(data.total),
-            cart_page: CART_PAGE_URL,
-            source: "jopa-cart-checkout",
-            reservation_summary: lineItems,
-            _subject: "Jopa Cart Checkout Started",
-            _template: "table",
-            _captcha: "false"
-          };
-
-          if (navigator.sendBeacon) {
-            try {
-              var formData = new FormData();
-              Object.keys(payload).forEach(function(key) {
-                formData.append(key, payload[key]);
-              });
-
-              if (navigator.sendBeacon("https://formsubmit.co/reservas@jopanauticos.com", formData)) {
-                pushDebug("lead email queued with sendBeacon");
-                return Promise.resolve({ queued: true, channel: "sendBeacon" });
-              }
-            } catch (error) {
-              pushDebug("lead email sendBeacon fallback -> " + (error && error.message ? error.message : "unknown"));
-            }
-          }
-
-          return fetch(RESERVATION_EMAIL_ENDPOINT, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json"
-            },
-            keepalive: true,
-            body: JSON.stringify(payload)
-          }).then(function(response) {
-            if (!response.ok) {
-              return response.text().then(function(text) {
-                throw new Error(text || "Lead email could not be sent.");
-              });
-            }
-
-            return response.json().catch(function() {
-              return {};
-            });
-          });
-        }
-
-        function waitForLeadEmailBeforeRedirect() {
-          return Promise.race([
-            sendCheckoutLeadEmail().catch(function(error) {
-              pushDebug("lead email warning -> " + (error && error.message ? error.message : "unknown"));
-              return null;
-            }),
-            new Promise(function(resolve) {
-              window.setTimeout(resolve, 900);
-            })
-          ]);
-        }
-
         if (checkoutButton) {
           checkoutButton.addEventListener("click", function () {
             var data = normalizeCartData(getStoredCart());
@@ -1541,24 +1458,17 @@
                 return;
               }
 
-              checkoutStatusEl.textContent = "Stripe session created successfully. Preparing checkout...";
+              checkoutStatusEl.textContent = "Stripe session created successfully. Redirecting to checkout...";
               checkoutStatusEl.className = "status success";
-              pushDebug("checkout ready -> waiting for lead email before redirect");
-              checkoutButton.textContent = "Preparing email...";
+              pushDebug("checkout ready -> redirecting to Stripe");
+              checkoutButton.textContent = "Redirecting to Stripe...";
 
-              waitForLeadEmailBeforeRedirect().then(function() {
-                checkoutStatusEl.textContent = "Redirecting to checkout...";
-                checkoutStatusEl.className = "status success";
-                pushDebug("redirecting to Stripe");
-                checkoutButton.textContent = "Redirecting to Stripe...";
+              if (session.url) {
+                window.location.href = session.url;
+                return;
+              }
 
-                if (session.url) {
-                  window.location.href = session.url;
-                  return;
-                }
-
-                redirectToStripeCheckout(session.id);
-              });
+              redirectToStripeCheckout(session.id);
             }).catch(function(error) {
               checkoutButton.disabled = false;
               checkoutButton.textContent = "Continue to Secure Checkout";
