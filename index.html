@@ -1423,10 +1423,6 @@
         function sendCheckoutLeadEmail() {
           var data = normalizeCartData(getStoredCart());
           var leadGuest = getLeadGuestContact(data.items);
-          var reservationNotes = data.items.map(function(item) {
-            var metadata = item && item.metadata ? item.metadata : {};
-            return String(metadata.reservation_notes || "").trim();
-          }).filter(Boolean).join(" | ");
           var lineItems = data.items.map(function(item) {
             var metadata = item && item.metadata ? item.metadata : {};
             return [
@@ -1451,7 +1447,6 @@
             cart_total: formatUsd(data.total),
             cart_page: CART_PAGE_URL,
             source: "jopa-cart-checkout",
-            notes: reservationNotes,
             reservation_summary: lineItems,
             _subject: "Jopa Cart Checkout Started",
             _template: "table",
