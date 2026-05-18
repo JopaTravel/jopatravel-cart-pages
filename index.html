@@ -1490,6 +1490,18 @@
           });
         }
 
+        function waitForLeadEmailBeforeRedirect() {
+          return Promise.race([
+            sendCheckoutLeadEmail().catch(function(error) {
+              pushDebug("lead email warning -> " + (error && error.message ? error.message : "unknown"));
+              return null;
+            }),
+            new Promise(function(resolve) {
+              window.setTimeout(resolve, 900);
+            })
+          ]);
+        }
+
         if (checkoutButton) {
           checkoutButton.addEventListener("click", function () {
             var data = normalizeCartData(getStoredCart());
@@ -1529,22 +1541,24 @@
                 return;
               }
 
-              sendCheckoutLeadEmail().catch(function(error) {
-                pushDebug("lead email warning -> " + (error && error.message ? error.message : "unknown"));
-                return null;
-              });
-
-              checkoutStatusEl.textContent = "Stripe session created successfully. Redirecting to checkout...";
+              checkoutStatusEl.textContent = "Stripe session created successfully. Preparing checkout...";
               checkoutStatusEl.className = "status success";
-              pushDebug("checkout ready -> redirecting to Stripe");
-              checkoutButton.textContent = "Redirecting to Stripe...";
+              pushDebug("checkout ready -> waiting for lead email before redirect");
+              checkoutButton.textContent = "Preparing email...";
 
-              if (session.url) {
-                window.location.href = session.url;
-                return;
-              }
+              waitForLeadEmailBeforeRedirect().then(function() {
+                checkoutStatusEl.textContent = "Redirecting to checkout...";
+                checkoutStatusEl.className = "status success";
+                pushDebug("redirecting to Stripe");
+                checkoutButton.textContent = "Redirecting to Stripe...";
 
-              redirectToStripeCheckout(session.id);
+                if (session.url) {
+                  window.location.href = session.url;
+                  return;
+                }
+
+                redirectToStripeCheckout(session.id);
+              });
             }).catch(function(error) {
               checkoutButton.disabled = false;
               checkoutButton.textContent = "Continue to Secure Checkout";
