@@ -1458,22 +1458,6 @@
             _captcha: "false"
           };
 
-          if (navigator.sendBeacon) {
-            try {
-              var formData = new FormData();
-              Object.keys(payload).forEach(function(key) {
-                formData.append(key, payload[key]);
-              });
-
-              if (navigator.sendBeacon("https://formsubmit.co/reservas@jopanauticos.com", formData)) {
-                pushDebug("lead email queued with sendBeacon");
-                return Promise.resolve({ queued: true, channel: "sendBeacon" });
-              }
-            } catch (error) {
-              pushDebug("lead email sendBeacon fallback -> " + (error && error.message ? error.message : "unknown"));
-            }
-          }
-
           return fetch(RESERVATION_EMAIL_ENDPOINT, {
             method: "POST",
             headers: {
