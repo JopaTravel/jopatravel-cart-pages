@@ -700,8 +700,6 @@
         var STRIPE_CHECKOUT_ENDPOINT = BACKEND_BASE_URL + "/api/create-checkout-session";
         var SITE_URL = "https://www.jopatravel.com";
         var CART_PAGE_URL = "https://cart.jopatravel.com";
-        var RESERVATION_EMAIL = "reservas@jopanauticos.com";
-        var RESERVATION_EMAIL_ENDPOINT = "https://formsubmit.co/ajax/" + RESERVATION_EMAIL;
         var CART_SYNC_EVENT = "jopa-cart-updated";
         var SHOPPING_CATEGORIES = [
           {
@@ -1419,81 +1417,6 @@
           });
         }
 
-        function buildLeadEmailPayload(session) {
-          var data = normalizeCartData(getStoredCart());
-          var leadGuest = getLeadGuestContact(data.items);
-          var lineItems = data.items.map(function(item, index) {
-            var metadata = item.metadata || {};
-            return [
-              (index + 1) + ". " + (item.name || "Jopa Travel Reservation"),
-              "Qty " + Number(item.quantity || 0),
-              "Unit " + formatUsd((item.unitAmount || 0) / 100),
-              "Line total " + formatUsd((Number(item.quantity || 0) * Number(item.unitAmount || 0)) / 100),
-              metadata.reservation_date ? "Date " + metadata.reservation_date : "",
-              metadata.reservation_hotel ? "Hotel " + metadata.reservation_hotel : "",
-              metadata.reservation_hotel_zone ? "Zone " + metadata.reservation_hotel_zone : "",
-              metadata.combo_services ? "Combo services: " + metadata.combo_services : ""
-            ].filter(Boolean).join(" | ");
-          }).join("\n");
-
-          return {
-            _subject: "Jopa Cart Checkout Started",
-            _template: "table",
-            _captcha: "false",
-            full_name: leadGuest && leadGuest.name || "",
-            email: leadGuest && leadGuest.email || "",
-            phone: leadGuest && leadGuest.phone || "",
-            passengers: String(data.passengers || 0),
-            items_in_cart: String(data.items.length),
-            cart_total: formatUsd(data.total),
-            stripe_session_id: session && session.id || "",
-            stripe_checkout_url: session && session.url || "",
-            cart_page: CART_PAGE_URL,
-            source: "jopa-cart-checkout",
-            reservation_summary: lineItems
-          };
-        }
-
-        function sendCheckoutLeadEmail(session) {
-          var payload = buildLeadEmailPayload(session);
-
-          if (navigator.sendBeacon) {
-            try {
-              var formData = new FormData();
-              Object.keys(payload).forEach(function(key) {
-                formData.append(key, payload[key]);
-              });
-
-              if (navigator.sendBeacon("https://formsubmit.co/" + RESERVATION_EMAIL, formData)) {
-                pushDebug("lead email queued with sendBeacon");
-                return Promise.resolve({ queued: true, channel: "sendBeacon" });
-              }
-            } catch (error) {
-              pushDebug("lead email sendBeacon fallback -> " + (error && error.message ? error.message : "unknown"));
-            }
-          }
-
-          return fetch(RESERVATION_EMAIL_ENDPOINT, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json"
-            },
-            keepalive: true,
-            body: JSON.stringify(payload)
-          }).then(function(response) {
-            if (!response.ok) {
-              return response.text().then(function(text) {
-                throw new Error(text || "Reservation email could not be sent.");
-              });
-            }
-
-            return response.json().catch(function() {
-              return {};
-            });
-          });
-        }
-
         function setCheckoutStatus(message, statusClass) {
           checkoutStatusEl.textContent = message;
           checkoutStatusEl.className = statusClass ? "status " + statusClass : "status";
@@ -1531,11 +1454,6 @@
               setCheckoutStatus("Stripe session created successfully. Redirecting to checkout.", "success");
               pushDebug("checkout ready -> redirecting to Stripe");
               checkoutButton.textContent = "Redirecting to Stripe...";
-
-              sendCheckoutLeadEmail(session).catch(function(error) {
-                pushDebug("lead email warning -> " + (error && error.message ? error.message : "unknown"));
-                return null;
-              });
 
               if (session.url) {
                 window.location.href = session.url;
