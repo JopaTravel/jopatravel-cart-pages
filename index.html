@@ -399,6 +399,72 @@
         border-color:rgba(13,47,111,.16);
       }
 
+
+      #jopa-cart-page .coupon-box{
+        margin:18px 0 14px;
+        padding:16px;
+        border:1px solid rgba(13,47,111,.12);
+        border-radius:18px;
+        background:#f8fafc;
+      }
+
+      #jopa-cart-page .coupon-label{
+        display:block;
+        margin-bottom:8px;
+        color:var(--navy-deep);
+        font-size:13px;
+        font-weight:800;
+      }
+
+      #jopa-cart-page .coupon-row{
+        display:grid;
+        grid-template-columns:1fr auto;
+        gap:10px;
+      }
+
+      #jopa-cart-page .coupon-input{
+        width:100%;
+        min-width:0;
+        border:1px solid rgba(13,47,111,.18);
+        border-radius:12px;
+        padding:12px 13px;
+        color:var(--text);
+        font:600 14px 'Montserrat',sans-serif;
+        text-transform:uppercase;
+        background:#fff;
+      }
+
+      #jopa-cart-page .coupon-apply{
+        border:0;
+        border-radius:12px;
+        padding:0 16px;
+        color:#fff;
+        background:var(--navy);
+        font:800 13px 'Montserrat',sans-serif;
+        cursor:pointer;
+      }
+
+      #jopa-cart-page .coupon-remove{
+        margin-top:10px;
+        border:0;
+        padding:0;
+        color:var(--accent);
+        background:transparent;
+        font:800 12px 'Montserrat',sans-serif;
+        cursor:pointer;
+      }
+
+      #jopa-cart-page .coupon-message{
+        margin:10px 0 0;
+        color:var(--muted);
+        font-size:12px;
+        line-height:1.5;
+      }
+
+      #jopa-cart-page .coupon-message.success{color:#027a48;}
+      #jopa-cart-page .coupon-message.error{color:#b42318;}
+      #jopa-cart-page .cart-summary-row.discount{color:#027a48;}
+
       #jopa-cart-page .cart-actions{
         display:grid;
         gap:12px;
@@ -668,6 +734,20 @@
                 <span>Current subtotal</span>
                 <strong id="jopaCartSubtotal">$0.00 USD</strong>
               </div>
+
+              <div class="coupon-box" id="jopaCouponBox">
+                <label class="coupon-label" for="jopaCouponInput">Promo code</label>
+                <div class="coupon-row">
+                  <input class="coupon-input" id="jopaCouponInput" type="text" autocomplete="off" placeholder="ENTER CODE">
+                  <button class="coupon-apply" id="jopaCouponApply" type="button">Apply</button>
+                </div>
+                <button class="coupon-remove" id="jopaCouponRemove" type="button" hidden>Remove coupon</button>
+                <p class="coupon-message" id="jopaCouponMessage">Enter a valid Jopa Travel coupon code.</p>
+              </div>
+              <div class="cart-summary-row discount" id="jopaCouponDiscountRow" hidden>
+                <span id="jopaCouponDiscountLabel">Coupon discount</span>
+                <strong id="jopaCouponDiscount">-$0.00 USD</strong>
+              </div>
               <div class="cart-summary-row cart-summary-total">
                 <span>Total to checkout</span>
                 <strong id="jopaCartTotal">$0.00 USD</strong>
@@ -701,6 +781,9 @@
         var SITE_URL = "https://www.jopatravel.com";
         var CART_PAGE_URL = "https://cart.jopatravel.com";
         var CART_SYNC_EVENT = "jopa-cart-updated";
+
+        var COUPON_STORAGE_KEY = "jopaTravelCoupon";
+        var JOPA_PROMOTIONS = [{"promoId":"PROMO-002","name":"Anuar Fayad","code":"AFJOIA5500","codeKey":"AFJOIA5500","type":"specific_price","value":5500.0,"currency":"MXN","minimumPurchaseAmount":0.0,"minimumGuests":1,"maxRedemptions":10,"redemptionsUsed":0,"stackable":false,"priority":1,"validFrom":"2026-05-08","validTo":"2026-12-31","badgeDesktop":"La Joia Partner Discount","badgeMobile":"La Joia Partner Disount","messageDesktop":"Disfruta Haye","messageMobile":"Disfruta Haye","terms":"Valid only for la Joia","notes":""},{"promoId":"PROMO-002","name":"Anuar Fayad","code":"AFJOPA3000","codeKey":"AFJOPA3000","type":"specific_price","value":3000.0,"currency":"MXN","minimumPurchaseAmount":0.0,"minimumGuests":1,"maxRedemptions":10,"redemptionsUsed":0,"stackable":false,"priority":1,"validFrom":"2026-05-08","validTo":"2026-12-31","badgeDesktop":"Jopa Partner Discount","badgeMobile":"Jopa Partner Discount","messageDesktop":"Disfruta Haye","messageMobile":"Disfruta Haye","terms":"Valid only for Jopa","notes":""},{"promoId":"GOMARTQUETZAL-10","name":"GoMartQuetzal10%","code":"GOmartQuetzal10%","codeKey":"GOMARTQUETZAL10%","type":"percent","value":10.0,"currency":"%","minimumPurchaseAmount":0.0,"minimumGuests":1,"maxRedemptions":10000,"redemptionsUsed":0,"stackable":false,"priority":1,"validFrom":"2026-05-08","validTo":"2026-12-31","badgeDesktop":"GOmart 10% Discount","badgeMobile":"GOmart 10% Discount","messageDesktop":"GOmart 10% Discount","messageMobile":"GOmart 10% Discount","terms":"Valid only for Jopa","notes":""},{"promoId":"GOMARTQUETZAL-15","name":"GoMartQuetzal15%","code":"GOmartQuetzal15%","codeKey":"GOMARTQUETZAL15%","type":"percent","value":15.0,"currency":"%","minimumPurchaseAmount":0.0,"minimumGuests":1,"maxRedemptions":10000,"redemptionsUsed":0,"stackable":false,"priority":1,"validFrom":"2026-05-08","validTo":"2026-12-31","badgeDesktop":"GOmart 15% Discount","badgeMobile":"GOmart 15% Discount","messageDesktop":"GOmart 15% Discount","messageMobile":"GOmart 15% Discount","terms":"Valid only for Jopa","notes":""},{"promoId":"GOMARTQUETZAL-5","name":"GoMartQuetzal5%","code":"GOmartQuetzal5%","codeKey":"GOMARTQUETZAL5%","type":"percent","value":5.0,"currency":"%","minimumPurchaseAmount":0.0,"minimumGuests":1,"maxRedemptions":10000,"redemptionsUsed":0,"stackable":false,"priority":1,"validFrom":"2026-05-08","validTo":"2026-12-31","badgeDesktop":"GOmart 5% Discount","badgeMobile":"GOmart 5% Discount","messageDesktop":"GOmart 5% Discount","messageMobile":"GOmart 5% Discount","terms":"Valid only for Jopa","notes":""},{"promoId":"JAVIERTOALA-20","name":"Javier Toala","code":"JATOA20%","codeKey":"JATOA20%","type":"percent","value":20.0,"currency":"%","minimumPurchaseAmount":0.0,"minimumGuests":1,"maxRedemptions":10,"redemptionsUsed":0,"stackable":false,"priority":1,"validFrom":"2026-05-08","validTo":"2026-12-31","badgeDesktop":"Preferred Client","badgeMobile":"Preferred Cliente","messageDesktop":"Preferred Cliente","messageMobile":"Preferred Cliente","terms":"Valid only for Jopa","notes":""},{"promoId":"PROMO-003","name":"Paulino Estevez","code":"PEJOIA5500","codeKey":"PEJOIA5500","type":"specific_price","value":5500.0,"currency":"MXN","minimumPurchaseAmount":0.0,"minimumGuests":1,"maxRedemptions":10,"redemptionsUsed":0,"stackable":false,"priority":1,"validFrom":"2026-05-08","validTo":"2026-12-31","badgeDesktop":"La Joia Partner Discount","badgeMobile":"La Joia Partner Disount","messageDesktop":"Disfutalo PEM","messageMobile":"Disfutalo PEM","terms":"Valid only for la Joia","notes":""},{"promoId":"PROMO-003","name":"Paulino Estevez","code":"PEJOPA3000","codeKey":"PEJOPA3000","type":"specific_price","value":3000.0,"currency":"MXN","minimumPurchaseAmount":0.0,"minimumGuests":1,"maxRedemptions":10,"redemptionsUsed":0,"stackable":false,"priority":1,"validFrom":"2026-05-08","validTo":"2026-12-31","badgeDesktop":"JopaPartner Discount","badgeMobile":"Jopa Partner Discount","messageDesktop":"Disfutalo PEM","messageMobile":"Disfutalo PEM","terms":"Valid only for Jopa","notes":""},{"promoId":"PROMO-004","name":"Paulino Estevez","code":"PEM","codeKey":"PEM","type":"percent","value":99.0,"currency":"%","minimumPurchaseAmount":0.0,"minimumGuests":1,"maxRedemptions":1000,"redemptionsUsed":0,"stackable":false,"priority":1,"validFrom":"2026-05-08","validTo":"2026-12-31","badgeDesktop":"Jopa Partner Discount","badgeMobile":"Jopa Partner Discount","messageDesktop":"Excelente Descuento PEM","messageMobile":"Excelente Descuento PEM","terms":"Valid only for Jopa","notes":""},{"promoId":"PROMO-001","name":"Samuel Jimenez","code":"SJJOIA5500","codeKey":"SJJOIA5500","type":"specific_price","value":5500.0,"currency":"MXN","minimumPurchaseAmount":0.0,"minimumGuests":1,"maxRedemptions":10,"redemptionsUsed":0,"stackable":false,"priority":1,"validFrom":"2026-05-08","validTo":"2026-12-31","badgeDesktop":"La Joia Partner Discount","badgeMobile":"La Joia Partner Disount","messageDesktop":"No te pongas muy pedo Sammy","messageMobile":"No te pongas muy pedo Sammy","terms":"Valid only for la Joia","notes":""},{"promoId":"PROMO-001","name":"Samuel Jimenez","code":"SJJOPA3000","codeKey":"SJJOPA3000","type":"specific_price","value":3000.0,"currency":"MXN","minimumPurchaseAmount":0.0,"minimumGuests":1,"maxRedemptions":10,"redemptionsUsed":0,"stackable":false,"priority":1,"validFrom":"2026-05-08","validTo":"2026-12-31","badgeDesktop":"Jopa Partner Discount","badgeMobile":"Jopa Partner Discount","messageDesktop":"No te pongas muy pedo Sammy","messageMobile":"No te pongas muy pedo Sammy","terms":"Valid only for Jopa","notes":""}];
         var SHOPPING_CATEGORIES = [
           {
             label: "Isla Mujeres VIP Premium Tour",
@@ -784,6 +867,14 @@
         var categoryMenuEl = document.getElementById("jopaCategoryMenu");
         var categoryGridEl = document.getElementById("jopaCategoryGrid");
         var clearButton = document.getElementById("jopaCartClear");
+
+        var couponInputEl = document.getElementById("jopaCouponInput");
+        var couponApplyEl = document.getElementById("jopaCouponApply");
+        var couponRemoveEl = document.getElementById("jopaCouponRemove");
+        var couponMessageEl = document.getElementById("jopaCouponMessage");
+        var couponDiscountRowEl = document.getElementById("jopaCouponDiscountRow");
+        var couponDiscountLabelEl = document.getElementById("jopaCouponDiscountLabel");
+        var couponDiscountEl = document.getElementById("jopaCouponDiscount");
 
         function pushDebug(message) {
           return message;
@@ -1188,6 +1279,133 @@
           };
         }
 
+
+        function normalizeCouponCode(value) {
+          return String(value || "").trim().toUpperCase();
+        }
+
+        function getStoredCouponCode() {
+          try {
+            return normalizeCouponCode(localStorage.getItem(COUPON_STORAGE_KEY) || "");
+          } catch (error) {
+            return "";
+          }
+        }
+
+        function setStoredCouponCode(code) {
+          try {
+            if (code) {
+              localStorage.setItem(COUPON_STORAGE_KEY, normalizeCouponCode(code));
+            } else {
+              localStorage.removeItem(COUPON_STORAGE_KEY);
+            }
+          } catch (error) {}
+        }
+
+        function findPromotion(code) {
+          var key = normalizeCouponCode(code);
+          return JOPA_PROMOTIONS.find(function(promotion) {
+            return normalizeCouponCode(promotion.code) === key || normalizeCouponCode(promotion.codeKey) === key;
+          }) || null;
+        }
+
+        function isPromotionDateValid(promotion) {
+          var today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          if (promotion.validFrom) {
+            var from = new Date(promotion.validFrom + "T00:00:00");
+            if (from > today) return false;
+          }
+
+          if (promotion.validTo) {
+            var to = new Date(promotion.validTo + "T23:59:59");
+            if (to < today) return false;
+          }
+
+          return true;
+        }
+
+        function calculateCouponDiscount(data, promotion) {
+          if (!promotion || !data || data.total <= 0) return 0;
+          if (!isPromotionDateValid(promotion)) return 0;
+          if (data.passengers < Number(promotion.minimumGuests || 1)) return 0;
+          if (data.total < Number(promotion.minimumPurchaseAmount || 0)) return 0;
+
+          if (promotion.type === "percent") {
+            return Math.min(data.total, data.total * (Number(promotion.value || 0) / 100));
+          }
+
+          return 0;
+        }
+
+        function getCouponResult(data) {
+          var code = getStoredCouponCode();
+          var promotion = findPromotion(code);
+          var discount = calculateCouponDiscount(data, promotion);
+
+          if (!code) {
+            return { code: "", promotion: null, discount: 0, total: data.total, message: "Enter a valid Jopa Travel coupon code.", status: "" };
+          }
+
+          if (!promotion) {
+            return { code: code, promotion: null, discount: 0, total: data.total, message: "Coupon code not found.", status: "error" };
+          }
+
+          if (!isPromotionDateValid(promotion)) {
+            return { code: code, promotion: promotion, discount: 0, total: data.total, message: "This coupon is not valid today.", status: "error" };
+          }
+
+          if (promotion.type !== "percent") {
+            return {
+              code: code,
+              promotion: promotion,
+              discount: 0,
+              total: data.total,
+              message: promotion.badgeDesktop + " accepted. This fixed-price MXN coupon is sent to checkout for backend validation.",
+              status: "success"
+            };
+          }
+
+          if (discount <= 0) {
+            return { code: code, promotion: promotion, discount: 0, total: data.total, message: "Coupon requirements are not met for this cart.", status: "error" };
+          }
+
+          return {
+            code: code,
+            promotion: promotion,
+            discount: discount,
+            total: Math.max(0, data.total - discount),
+            message: (promotion.messageDesktop || promotion.badgeDesktop || "Coupon applied") + ".",
+            status: "success"
+          };
+        }
+
+        function renderCoupon(data) {
+          var result = getCouponResult(data);
+
+          if (couponInputEl && !couponInputEl.value && result.code) {
+            couponInputEl.value = result.code;
+          }
+
+          if (couponMessageEl) {
+            couponMessageEl.textContent = result.message;
+            couponMessageEl.className = "coupon-message" + (result.status ? " " + result.status : "");
+          }
+
+          if (couponRemoveEl) {
+            couponRemoveEl.hidden = !result.code;
+          }
+
+          if (couponDiscountRowEl && couponDiscountLabelEl && couponDiscountEl) {
+            couponDiscountRowEl.hidden = result.discount <= 0;
+            couponDiscountLabelEl.textContent = result.promotion ? "Coupon " + result.promotion.code : "Coupon discount";
+            couponDiscountEl.textContent = "-" + formatUsd(result.discount);
+          }
+
+          return result;
+        }
+
         function formatReservationDate(value) {
           if (!value) return "";
 
@@ -1293,7 +1511,8 @@
           cartProductsEl.textContent = String(data.items.length);
           cartPassengersEl.textContent = String(data.passengers);
           cartSubtotalEl.textContent = formatUsd(data.total);
-          cartTotalEl.textContent = formatUsd(data.total);
+          var couponResult = renderCoupon(data);
+          cartTotalEl.textContent = formatUsd(couponResult.total);
 
           if (cartContactEl && cartContactNameEl && cartContactEmailEl && cartContactPhoneEl) {
             if (leadGuest) {
@@ -1369,6 +1588,26 @@
             cancelUrl: CART_PAGE_URL
           };
 
+
+          var couponResult = getCouponResult(data);
+          if (couponResult.code && couponResult.promotion) {
+            payload.coupon = {
+              code: couponResult.promotion.code,
+              promoId: couponResult.promotion.promoId,
+              type: couponResult.promotion.type,
+              value: couponResult.promotion.value,
+              currency: couponResult.promotion.currency,
+              discountAmountUsd: Number(couponResult.discount.toFixed(2)),
+              finalTotalUsd: Number(couponResult.total.toFixed(2)),
+              terms: couponResult.promotion.terms
+            };
+            payload.cart.discount = {
+              code: couponResult.promotion.code,
+              amountUsd: Number(couponResult.discount.toFixed(2)),
+              finalTotalUsd: Number(couponResult.total.toFixed(2))
+            };
+          }
+
           pushDebug("checkout payload -> cartId=" + (activeCartId || "none") + ", services=" + data.services + ", lines=" + data.products + ", total=" + data.total.toFixed(2));
           return payload;
         }
@@ -1421,6 +1660,30 @@
           checkoutStatusEl.textContent = message;
           checkoutStatusEl.className = statusClass ? "status " + statusClass : "status";
           checkoutStatusEl.style.display = "block";
+        }
+
+
+        if (couponApplyEl && couponInputEl) {
+          couponApplyEl.addEventListener("click", function() {
+            setStoredCouponCode(couponInputEl.value);
+            renderCart();
+          });
+
+          couponInputEl.addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              setStoredCouponCode(couponInputEl.value);
+              renderCart();
+            }
+          });
+        }
+
+        if (couponRemoveEl) {
+          couponRemoveEl.addEventListener("click", function() {
+            setStoredCouponCode("");
+            if (couponInputEl) couponInputEl.value = "";
+            renderCart();
+          });
         }
 
         if (checkoutButton) {
@@ -1481,6 +1744,8 @@
         if (clearButton) {
           clearButton.addEventListener("click", function () {
             clearStoredCart();
+            setStoredCouponCode("");
+            if (couponInputEl) couponInputEl.value = "";
             renderCart();
             setCheckoutStatus("Cart cleared successfully.", "");
           });
